@@ -1,0 +1,94 @@
+---
+title: "Application Exercise 4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(tidyverse)
+library(lubridate)
+library(DataCombine)
+```
+
+# Question 1
+
+```{r}
+library(readxl)
+dja_performance_report_monthly <- read_excel("dja-performance-report-monthly.xls", 
+     sheet = "dja-performance-report-monthly", 
+     skip = 5)
+
+class(dja_performance_report_monthly)
+
+dj <- dja_performance_report_monthly 
+```
+
+# Question 2
+```{r}
+dj_new <- (dj[c(2,3)])[complete.cases(dj[c(2,3)]),]
+dj_new
+```
+
+
+
+# Question 3
+```{r}
+dj_new <- dj_new %>%
+  rename(
+    date = 'Effective Date',
+    close_value = 'Close Value'
+  )
+```
+
+# Question 4
+```{r}
+glimpse(dj_new)
+#Effectve_date values are character and Close_Value values are numeric 
+```
+
+# Question 5
+```{r}
+dj_new$month <- mdy(dj_new$date) %>%
+  month()
+```
+
+
+# Question 6
+```{r}
+v <- diff(dj_new$month, lag = 1)
+v[(v != 1) & (v!= -11)]
+
+dj_new$diff <- c(NA,v)
+date <- dj_new[dj_new$diff != 1 & dj_new$diff != -11,]$date[2]
+incident <- which(dj_new$date == date, arr.ind=TRUE)
+dj_new[c(incident-1, incident, incident+1),]
+```
+We find that there was a gap of 5 months between July 30th 1914 and December 31st 
+1914. Because of World War 1, all major European stock markets closed, which explains
+the gaps in the data of monthly performance history of Dow Jones from August to
+December of 1914.
+
+# Question 7
+
+```{r}
+dj_new$rel_change_pct <- c(NA, diff(dj_new$close_value, lag = 1))
+dj_new$rel_change_pct[2:nrow(dj_new)] <- 
+  dj_new$rel_change_pct[2:nrow(dj_new)]/dj_new$close_value[1:(nrow(dj_new)-1)]
+```
+
+
+# Question 8
+```{r}
+ggplot(dj_new[-1,], aes(mdy(date), rel_change_pct)) + geom_line()
+```
+
+
+# Question 9
+```{r}
+dj_new[dj_new$rel_change_pct==max(dj_new$rel_change_pct,na.rm = TRUE),]$date
+#max(dj_new$rel_change_pct,na.rm = TRUE)
+```
+
+# Question 10
+# Question 11
